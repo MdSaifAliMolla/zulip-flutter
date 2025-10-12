@@ -411,6 +411,7 @@ class _KatexParser {
     KatexSpanFontWeight? fontWeight;
     KatexSpanFontStyle? fontStyle;
     KatexSpanTextAlign? textAlign;
+    KatexBorderStyle? borderStyle;
     var index = 0;
     while (index < spanClasses.length) {
       final spanClass = spanClasses[index++];
@@ -626,6 +627,32 @@ class _KatexParser {
         case 'nobreak':
         case 'allowbreak':
         case 'mathdefault':
+        case 'tag':
+        case 'eqn-num':
+        case 'mtable':
+        case 'col-align-l':
+        case 'col-align-c':
+        case 'col-align-r':
+        case 'delimcenter':
+        case 'accent':
+        case 'accent-body':
+        case 'vlist':
+        case 'vlist-r':
+        case 'vlist-s':
+        case 'svg-align':
+        case 'hide-tail':
+        case 'halfarrow-left':
+        case 'halfarrow-right':
+        case 'brace-left':
+        case 'brace-center':
+        case 'brace-right':
+        case 'root':
+        case 'sqrt':
+        case 'pstrut':
+        case 'arraycolsep':
+        case 'vertical-separator':
+        case 'frac-line':
+        case 'mfrac':
           // Ignore these classes because they don't have a CSS definition
           // in katex.scss, but we encounter them in the generated HTML.
           // (Why are they there if they're not used?  The story seems to be:
@@ -636,6 +663,24 @@ class _KatexParser {
           // )
           break;
 
+        case 'overline':
+        case 'underline':
+          break;
+
+        case 'overline-line':
+          borderStyle = KatexBorderStyle(
+            position: KatexBorderPosition.bottom,
+            widthEm: 0.04,
+          );
+          break;
+
+        case 'underline-line':
+          borderStyle = KatexBorderStyle(
+            position: KatexBorderPosition.bottom,
+            widthEm: 0.04,
+          );
+          break;
+
         default:
           assert(debugLog('KaTeX: Unsupported CSS class: $spanClass'));
           unsupportedCssClasses.add(spanClass);
@@ -644,6 +689,18 @@ class _KatexParser {
     }
 
     final inlineStyles = _parseInlineStyles(element);
+    // Extract border width if borderStyle was set
+    if (borderStyle != null) {
+      if (inlineStyles != null) {
+        final borderWidthEm = _takeStyleEm(inlineStyles, 'border-bottom-width');
+        if (borderWidthEm != null) {
+          borderStyle = KatexBorderStyle(
+            position: borderStyle.position,
+            widthEm: borderWidthEm,
+            color: borderStyle.color,
+          );
+        }}
+    }
     final styles = KatexSpanStyles(
       widthEm: widthEm,
       fontFamily: fontFamily,
@@ -657,10 +714,13 @@ class _KatexParser {
       marginRightEm: _takeStyleEm(inlineStyles, 'margin-right'),
       color: _takeStyleColor(inlineStyles, 'color'),
       position: _takeStylePosition(inlineStyles, 'position'),
+      borderStyle: borderStyle,
       // TODO handle more CSS properties
     );
     if (inlineStyles != null && inlineStyles.isNotEmpty) {
       for (final property in inlineStyles.keys) {
+        // Ignore known properties that don't need special handling
+        if (property == 'width' || property == 'min-width' || property == 'border-bottom-width') {continue;}
         assert(debugLog('KaTeX: Unexpected inline CSS property: $property'));
         unsupportedInlineCssProperties.add(property);
         _hasError = true;
@@ -840,6 +900,39 @@ enum KatexSpanPosition {
   relative,
 }
 
+enum KatexBorderPosition {
+  top,
+  bottom,
+}
+
+class KatexBorderStyle {
+  const KatexBorderStyle({
+    required this.position,
+    required this.widthEm,
+    this.color,
+  });
+
+  final KatexBorderPosition position;
+  final double widthEm;
+  final KatexSpanColor? color;
+
+  @override
+  bool operator ==(Object other) {
+    return other is KatexBorderStyle &&
+      other.position == position &&
+      other.widthEm == widthEm &&
+      other.color == color;
+  }
+
+  @override
+  int get hashCode => Object.hash('KatexBorderStyle', position, widthEm, color);
+
+  @override
+  String toString() {
+    return '${objectRuntimeType(this, 'KatexBorderStyle')}($position, $widthEm, $color)';
+  }
+}
+
 class KatexSpanColor {
   const KatexSpanColor(this.r, this.g, this.b, this.a);
 
@@ -893,6 +986,7 @@ class KatexSpanStyles {
 
   final KatexSpanColor? color;
   final KatexSpanPosition? position;
+  final KatexBorderStyle? borderStyle;
 
   const KatexSpanStyles({
     this.widthEm,
@@ -907,6 +1001,7 @@ class KatexSpanStyles {
     this.textAlign,
     this.color,
     this.position,
+    this.borderStyle,
   });
 
   @override
@@ -924,6 +1019,7 @@ class KatexSpanStyles {
     textAlign,
     color,
     position,
+    borderStyle,
   );
 
   @override
@@ -940,7 +1036,8 @@ class KatexSpanStyles {
       other.fontStyle == fontStyle &&
       other.textAlign == textAlign &&
       other.color == color &&
-      other.position == position;
+      other.position == position &&
+      other.borderStyle == borderStyle;
   }
 
   @override
@@ -958,6 +1055,7 @@ class KatexSpanStyles {
     if (textAlign != null) args.add('textAlign: $textAlign');
     if (color != null) args.add('color: $color');
     if (position != null) args.add('position: $position');
+    if (borderStyle != null) args.add('borderStyle: $borderStyle');
     return '${objectRuntimeType(this, 'KatexSpanStyles')}(${args.join(', ')})';
   }
 
@@ -975,6 +1073,7 @@ class KatexSpanStyles {
     bool textAlign = true,
     bool color = true,
     bool position = true,
+    bool borderStyle = true,
   }) {
     return KatexSpanStyles(
       widthEm: widthEm ? this.widthEm : null,
@@ -989,6 +1088,7 @@ class KatexSpanStyles {
       textAlign: textAlign ? this.textAlign : null,
       color: color ? this.color : null,
       position: position ? this.position : null,
+      borderStyle: borderStyle ? this.borderStyle : null,
     );
   }
 }
