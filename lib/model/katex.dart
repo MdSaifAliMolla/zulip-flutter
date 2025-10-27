@@ -627,32 +627,6 @@ class _KatexParser {
         case 'nobreak':
         case 'allowbreak':
         case 'mathdefault':
-        case 'tag':
-        case 'eqn-num':
-        case 'mtable':
-        case 'col-align-l':
-        case 'col-align-c':
-        case 'col-align-r':
-        case 'delimcenter':
-        case 'accent':
-        case 'accent-body':
-        case 'vlist':
-        case 'vlist-r':
-        case 'vlist-s':
-        case 'svg-align':
-        case 'hide-tail':
-        case 'halfarrow-left':
-        case 'halfarrow-right':
-        case 'brace-left':
-        case 'brace-center':
-        case 'brace-right':
-        case 'root':
-        case 'sqrt':
-        case 'pstrut':
-        case 'arraycolsep':
-        case 'vertical-separator':
-        case 'frac-line':
-        case 'mfrac':
           // Ignore these classes because they don't have a CSS definition
           // in katex.scss, but we encounter them in the generated HTML.
           // (Why are they there if they're not used?  The story seems to be:
@@ -668,6 +642,7 @@ class _KatexParser {
           break;
 
         case 'overline-line':
+          //
           borderStyle = KatexBorderStyle(
             position: KatexBorderPosition.bottom,
             widthEm: 0.04,
