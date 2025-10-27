@@ -639,10 +639,12 @@ class _KatexParser {
 
         case 'overline':
         case 'underline':
+         // Wrapper spans for overline/underline, the actual border is on -line child
           break;
 
         case 'overline-line':
-          //
+          // .overline-line { display: inline-block; width: 100%; border-bottom-style: solid; }
+          // Border applied via inline style: border-top-width: 0.04em;
           borderStyle = KatexBorderStyle(
             position: KatexBorderPosition.bottom,
             widthEm: 0.04,
@@ -650,6 +652,8 @@ class _KatexParser {
           break;
 
         case 'underline-line':
+          // .underline-line { display: inline-block; width: 100%; border-bottom-style: solid; }
+          // Border applied via inline style: border-bottom-width: 0.04em;
           borderStyle = KatexBorderStyle(
             position: KatexBorderPosition.bottom,
             widthEm: 0.04,
