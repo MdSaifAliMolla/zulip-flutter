@@ -42,12 +42,14 @@ class KatexWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget widget = _KatexNodeList(nodes: nodes);
 
-    return Directionality(
-      textDirection: TextDirection.ltr,
-      child: DefaultTextStyle(
-        style: mkBaseKatexTextStyle(textStyle).copyWith(
-          color: ContentTheme.of(context).textStylePlainParagraph.color),
-        child: widget));
+    return IntrinsicWidth(
+      child: Directionality(
+        textDirection: TextDirection.ltr,
+        child: DefaultTextStyle(
+          style: mkBaseKatexTextStyle(textStyle).copyWith(
+            color: ContentTheme.of(context).textStylePlainParagraph.color),
+          child: widget)),
+    );
   }
 }
 
@@ -245,11 +247,13 @@ class _KatexVlist extends StatelessWidget {
   Widget build(BuildContext context) {
     final em = DefaultTextStyle.of(context).style.fontSize!;
 
-    return Stack(children: List.unmodifiable(node.rows.map((row) {
-      return Transform.translate(
-        offset: Offset(0, row.verticalOffsetEm * em),
-        child: _KatexSpan(row.node));
-    })));
+    return IntrinsicWidth(
+      child: Stack(children: List.unmodifiable(node.rows.map((row) {
+        return Transform.translate(
+          offset: Offset(0, row.verticalOffsetEm * em),
+          child: _KatexSpan(row.node));
+      }))),
+    );
   }
 }
 
