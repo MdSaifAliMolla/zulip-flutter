@@ -411,7 +411,7 @@ class _KatexParser {
     KatexSpanFontWeight? fontWeight;
     KatexSpanFontStyle? fontStyle;
     KatexSpanTextAlign? textAlign;
-    KatexBorderStyle? borderStyle;
+    KatexSpanBorderBottomStyle? borderBottomStyle;
     var index = 0;
     while (index < spanClasses.length) {
       final spanClass = spanClasses[index++];
@@ -627,6 +627,8 @@ class _KatexParser {
         case 'nobreak':
         case 'allowbreak':
         case 'mathdefault':
+        case 'overline':
+        case 'underline':
           // Ignore these classes because they don't have a CSS definition
           // in katex.scss, but we encounter them in the generated HTML.
           // (Why are they there if they're not used?  The story seems to be:
@@ -637,27 +639,12 @@ class _KatexParser {
           // )
           break;
 
-        case 'overline':
-        case 'underline':
-         // Wrapper spans for overline/underline, the actual border is on -line child
-          break;
-
         case 'overline-line':
-          // .overline-line { display: inline-block; width: 100%; border-bottom-style: solid; }
-          // Border applied via inline style: border-top-width: 0.04em;
-          borderStyle = KatexBorderStyle(
-            position: KatexBorderPosition.bottom,
-            widthEm: 0.04,
-          );
-          break;
-
         case 'underline-line':
-          // .underline-line { display: inline-block; width: 100%; border-bottom-style: solid; }
+          // .underline-line { width: 100%; border-bottom-style: solid; }
           // Border applied via inline style: border-bottom-width: 0.04em;
-          borderStyle = KatexBorderStyle(
-            position: KatexBorderPosition.bottom,
-            widthEm: 0.04,
-          );
+          widthEm = double.infinity;
+          borderBottomStyle = KatexSpanBorderBottomStyle.solid;
           break;
 
         default:
@@ -668,18 +655,6 @@ class _KatexParser {
     }
 
     final inlineStyles = _parseInlineStyles(element);
-    // Extract border width if borderStyle was set
-    if (borderStyle != null) {
-      if (inlineStyles != null) {
-        final borderWidthEm = _takeStyleEm(inlineStyles, 'border-bottom-width');
-        if (borderWidthEm != null) {
-          borderStyle = KatexBorderStyle(
-            position: borderStyle.position,
-            widthEm: borderWidthEm,
-            color: borderStyle.color,
-          );
-        }}
-    }
     final styles = KatexSpanStyles(
       widthEm: widthEm,
       fontFamily: fontFamily,
@@ -693,7 +668,8 @@ class _KatexParser {
       marginRightEm: _takeStyleEm(inlineStyles, 'margin-right'),
       color: _takeStyleColor(inlineStyles, 'color'),
       position: _takeStylePosition(inlineStyles, 'position'),
-      borderStyle: borderStyle,
+      borderBottomStyle: borderBottomStyle,
+      borderBottomWidthEm: _takeStyleEm(inlineStyles, 'border-bottom-width')
       // TODO handle more CSS properties
     );
     if (inlineStyles != null && inlineStyles.isNotEmpty) {
@@ -879,37 +855,8 @@ enum KatexSpanPosition {
   relative,
 }
 
-enum KatexBorderPosition {
-  top,
-  bottom,
-}
-
-class KatexBorderStyle {
-  const KatexBorderStyle({
-    required this.position,
-    required this.widthEm,
-    this.color,
-  });
-
-  final KatexBorderPosition position;
-  final double widthEm;
-  final KatexSpanColor? color;
-
-  @override
-  bool operator ==(Object other) {
-    return other is KatexBorderStyle &&
-      other.position == position &&
-      other.widthEm == widthEm &&
-      other.color == color;
-  }
-
-  @override
-  int get hashCode => Object.hash('KatexBorderStyle', position, widthEm, color);
-
-  @override
-  String toString() {
-    return '${objectRuntimeType(this, 'KatexBorderStyle')}($position, $widthEm, $color)';
-  }
+enum KatexSpanBorderBottomStyle {
+  solid,
 }
 
 class KatexSpanColor {
@@ -965,7 +912,8 @@ class KatexSpanStyles {
 
   final KatexSpanColor? color;
   final KatexSpanPosition? position;
-  final KatexBorderStyle? borderStyle;
+  final KatexSpanBorderBottomStyle? borderBottomStyle;
+  final double? borderBottomWidthEm;
 
   const KatexSpanStyles({
     this.widthEm,
@@ -980,7 +928,8 @@ class KatexSpanStyles {
     this.textAlign,
     this.color,
     this.position,
-    this.borderStyle,
+    this.borderBottomStyle,
+    this.borderBottomWidthEm,
   });
 
   @override
@@ -998,7 +947,8 @@ class KatexSpanStyles {
     textAlign,
     color,
     position,
-    borderStyle,
+    borderBottomStyle,
+    borderBottomWidthEm
   );
 
   @override
@@ -1016,7 +966,8 @@ class KatexSpanStyles {
       other.textAlign == textAlign &&
       other.color == color &&
       other.position == position &&
-      other.borderStyle == borderStyle;
+      other.borderBottomStyle == borderBottomStyle &&
+      other.borderBottomWidthEm == borderBottomWidthEm;
   }
 
   @override
@@ -1034,7 +985,8 @@ class KatexSpanStyles {
     if (textAlign != null) args.add('textAlign: $textAlign');
     if (color != null) args.add('color: $color');
     if (position != null) args.add('position: $position');
-    if (borderStyle != null) args.add('borderStyle: $borderStyle');
+    if (borderBottomStyle != null) args.add('borderBottomStyle: $borderBottomStyle');
+    if (borderBottomWidthEm != null) args.add('borderBottomWidthEm: $borderBottomWidthEm');
     return '${objectRuntimeType(this, 'KatexSpanStyles')}(${args.join(', ')})';
   }
 
@@ -1052,7 +1004,8 @@ class KatexSpanStyles {
     bool textAlign = true,
     bool color = true,
     bool position = true,
-    bool borderStyle = true,
+    bool borderBottomStyle = true,
+    bool borderBottomWidthEm = true,
   }) {
     return KatexSpanStyles(
       widthEm: widthEm ? this.widthEm : null,
@@ -1067,7 +1020,8 @@ class KatexSpanStyles {
       textAlign: textAlign ? this.textAlign : null,
       color: color ? this.color : null,
       position: position ? this.position : null,
-      borderStyle: borderStyle ? this.borderStyle : null,
+      borderBottomStyle: borderBottomStyle ? this.borderBottomStyle : null,
+      borderBottomWidthEm: borderBottomWidthEm ? this.borderBottomWidthEm : null,
     );
   }
 }

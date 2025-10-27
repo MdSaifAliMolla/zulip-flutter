@@ -124,17 +124,17 @@ class _KatexSpan extends StatelessWidget {
         Color.fromARGB(katexColor.a, katexColor.r, katexColor.g, katexColor.b),
       null => null,
     };
-    if (styles.borderStyle case final borderStyle?) {
-      final currentColor = color ?? DefaultTextStyle.of(context).style.color!;
-      final Color borderColor = borderStyle.color != null
-          ? Color.fromARGB(borderStyle.color!.a, borderStyle.color!.r, borderStyle.color!.g, borderStyle.color!.b)
-          : currentColor;
-      final double borderWidth = borderStyle.widthEm * em;
 
-      return Container(
-        constraints: const BoxConstraints(minWidth: double.infinity),
-        height: borderWidth,
-        color: borderColor,
+    if (styles.borderBottomStyle == KatexSpanBorderBottomStyle.solid &&
+        styles.borderBottomWidthEm != null) {
+      final borderColor = color ?? DefaultTextStyle.of(context).style.color!;
+      final borderWidth = styles.borderBottomWidthEm! * em;
+
+      widget = DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(color: borderColor, width: borderWidth, style: BorderStyle.solid))),
+        child: widget,
       );
     }
 

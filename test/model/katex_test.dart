@@ -774,7 +774,7 @@ class KatexExample extends ContentExample {
               verticalOffsetEm: -3.8033 + 3,
               node: KatexSpanNode(nodes: [
                 KatexSpanNode(
-                  styles: KatexSpanStyles(borderStyle: KatexBorderStyle(position: KatexBorderPosition.bottom, widthEm: 0.04, color: null)),
+                  styles: KatexSpanStyles(widthEm: double.infinity, borderBottomStyle: KatexSpanBorderBottomStyle.solid, borderBottomWidthEm: 0.04),
                   nodes: []),
               ])),
           ]),
@@ -815,7 +815,7 @@ class KatexExample extends ContentExample {
               verticalOffsetEm: -2.84 + 3,
               node: KatexSpanNode(nodes: [
                 KatexSpanNode(
-                  styles: KatexSpanStyles(borderStyle: KatexBorderStyle(position: KatexBorderPosition.bottom, widthEm: 0.04, color: null)),
+                  styles: KatexSpanStyles(widthEm: double.infinity, borderBottomStyle: KatexSpanBorderBottomStyle.solid, borderBottomWidthEm: 0.04),
                   nodes: []),
               ])),
             KatexVlistRowNode(

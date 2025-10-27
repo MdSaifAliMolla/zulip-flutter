@@ -83,8 +83,10 @@ void main() {
       ]),
       (KatexExample.overline, skip: false, [
         ('A', Offset(0.0, 5.6), Size(15.4, 25.0)),
+        ('B', Offset(15.4, 5.6), Size(15.6, 25.0)),
       ]),
       (KatexExample.underline, skip: false, [
+        ('A', Offset(0.0, 5.6), Size(15.4, 25.0)),
         ('B', Offset(15.4, 5.6), Size(15.6, 25.0)),
       ]),
     ];
