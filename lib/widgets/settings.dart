@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import '../generated/l10n/zulip_localizations.dart';
 import '../model/settings.dart';
 import 'app_bar.dart';
+import 'icons.dart';
 import 'page.dart';
 import 'store.dart';
 import 'text.dart';
+import 'theme.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -23,12 +25,31 @@ class SettingsPage extends StatelessWidget {
       body: ListView(children: [
         _SettingsHeader(title: ZulipLocalizations.of(context).themeSettingTitle),
         const _ThemeSetting(),
-        const _BrowserPreferenceSetting(),
-        const _VisitFirstUnreadSetting(),
-        const _MarkReadOnScrollSetting(),
+        _BrowserPreferenceSetting(),
+        _SettingsNavitem(
+          title: 'Notifications',
+          onTap: () {
+            // TODO: Implement notifications settings page
+        }),
+        _SettingsNavitem(
+          title: 'Open message feeds at',
+          subtitle: VisitFirstUnreadSettingPage._valueDisplayName(
+            GlobalStoreWidget.settingsOf(context).visitFirstUnread,
+            zulipLocalizations: zulipLocalizations),
+          onTap: () => Navigator.push(context,
+            VisitFirstUnreadSettingPage.buildRoute()),
+        ),
+        _SettingsNavitem(
+          title: 'Mark messages as read on scroll',
+          subtitle: MarkReadOnScrollSettingPage._valueDisplayName(
+            GlobalStoreWidget.settingsOf(context).markReadOnScroll,
+            zulipLocalizations: zulipLocalizations),
+          onTap: () => Navigator.push(context,
+            MarkReadOnScrollSettingPage.buildRoute()),
+        ),
         if (GlobalSettingsStore.experimentalFeatureFlags.isNotEmpty)
-          ListTile(
-            title: Text(zulipLocalizations.experimentalFeatureSettingsPageTitle),
+          _SettingsNavitem(
+            title: zulipLocalizations.experimentalFeatureSettingsPageTitle,
             onTap: () => Navigator.push(context,
               ExperimentalFeaturesPage.buildRoute()))
       ]));
@@ -51,6 +72,38 @@ class _SettingsHeader extends StatelessWidget {
             fontSize: 17).merge(weightVariableTextStyle(context, wght: 600)),
         )));
   }}
+
+class _SettingsNavitem extends StatelessWidget {
+  const _SettingsNavitem({
+    required this.title,
+    this.subtitle,
+    required this.onTap,
+  });
+
+  final String title;
+  final String? subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final designVariables = DesignVariables.of(context);
+    return Material(
+      color: Colors.transparent,
+      child: ListTile(
+        title:  Text(title,
+        style: TextStyle(
+          color: designVariables.contextMenuItemText,
+          fontSize: 20).merge(weightVariableTextStyle(context, wght: 600))),
+        subtitle: subtitle != null ? Text(
+          subtitle!,
+          style: TextStyle(
+            fontSize: 17).merge(weightVariableTextStyle(context, wght: 400))) : null,
+        onTap: onTap,
+        trailing: Icon(
+          ZulipIcons.chevron_right,
+          color: designVariables.contextMenuItemIcon,),
+      ));}
+}
 
 class _ThemeSetting extends StatelessWidget {
   const _ThemeSetting();
@@ -103,22 +156,6 @@ class _BrowserPreferenceSetting extends StatelessWidget {
   }
 }
 
-class _VisitFirstUnreadSetting extends StatelessWidget {
-  const _VisitFirstUnreadSetting();
-
-  @override
-  Widget build(BuildContext context) {
-    final zulipLocalizations = ZulipLocalizations.of(context);
-    final globalSettings = GlobalStoreWidget.settingsOf(context);
-    return ListTile(
-      title: Text(zulipLocalizations.initialAnchorSettingTitle),
-      subtitle: Text(VisitFirstUnreadSettingPage._valueDisplayName(
-        globalSettings.visitFirstUnread, zulipLocalizations: zulipLocalizations)),
-      onTap: () => Navigator.push(context,
-        VisitFirstUnreadSettingPage.buildRoute()));
-  }
-}
-
 class VisitFirstUnreadSettingPage extends StatelessWidget {
   const VisitFirstUnreadSettingPage({super.key});
 
@@ -162,22 +199,6 @@ class VisitFirstUnreadSettingPage extends StatelessWidget {
                 zulipLocalizations: zulipLocalizations)),
               value: value),
         ])));
-  }
-}
-
-class _MarkReadOnScrollSetting extends StatelessWidget {
-  const _MarkReadOnScrollSetting();
-
-  @override
-  Widget build(BuildContext context) {
-    final zulipLocalizations = ZulipLocalizations.of(context);
-    final globalSettings = GlobalStoreWidget.settingsOf(context);
-    return ListTile(
-      title: Text(zulipLocalizations.markReadOnScrollSettingTitle),
-      subtitle: Text(MarkReadOnScrollSettingPage._valueDisplayName(
-        globalSettings.markReadOnScroll, zulipLocalizations: zulipLocalizations)),
-      onTap: () => Navigator.push(context,
-        MarkReadOnScrollSettingPage.buildRoute()));
   }
 }
 
