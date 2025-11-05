@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../generated/l10n/zulip_localizations.dart';
 import '../model/settings.dart';
 import 'app_bar.dart';
+import 'button.dart';
 import 'icons.dart';
 import 'page.dart';
 import 'store.dart';
@@ -95,12 +96,11 @@ class _SettingsNavitem extends StatelessWidget {
           fontSize: 20).merge(weightVariableTextStyle(context, wght: 600))),
         subtitle: subtitle != null ? Text(
           subtitle!,
-          style: TextStyle(
-            fontSize: 17).merge(weightVariableTextStyle(context, wght: 400))) : null,
+          style: TextStyle(fontSize: 17).merge(weightVariableTextStyle(context, wght: 400))) : null,
         onTap: onTap,
         trailing: Icon(
           ZulipIcons.chevron_right,
-          color: designVariables.contextMenuItemIcon,),
+          color: designVariables.contextMenuItemIcon),
       ));}
 }
 
@@ -146,13 +146,19 @@ class _BrowserPreferenceSetting extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final zulipLocalizations = ZulipLocalizations.of(context);
+    final designVariables = DesignVariables.of(context);
     final globalSettings = GlobalStoreWidget.settingsOf(context);
     final openLinksWithInAppBrowser =
       globalSettings.effectiveBrowserPreference == BrowserPreference.inApp;
-    return SwitchListTile.adaptive(
-      title: Text(zulipLocalizations.openLinksWithInAppBrowser),
-      value: openLinksWithInAppBrowser,
-      onChanged: (newValue) => _handleChange(context, newValue));
+    return Material(
+      color: Colors.transparent,
+      child: ListTile(
+        title: Text(zulipLocalizations.openLinksWithInAppBrowser,
+          style: TextStyle(
+            color: designVariables.contextMenuItemText, fontSize: 20).merge(weightVariableTextStyle(context, wght: 600))),
+        trailing: _CustomSwitch(
+          value: openLinksWithInAppBrowser,
+          onChanged: (newValue) => _handleChange(context, newValue))));
   }
 }
 
@@ -273,19 +279,28 @@ class ExperimentalFeaturesPage extends StatelessWidget {
     final zulipLocalizations = ZulipLocalizations.of(context);
     final globalSettings = GlobalStoreWidget.settingsOf(context);
     final flags = GlobalSettingsStore.experimentalFeatureFlags;
+    final designVariables = DesignVariables.of(context);
     assert(flags.isNotEmpty);
     return Scaffold(
       appBar: AppBar(
         title: Text(zulipLocalizations.experimentalFeatureSettingsPageTitle)),
-      body: Column(children: [
-        ListTile(
-          title: Text(zulipLocalizations.experimentalFeatureSettingsWarning)),
-        for (final flag in flags)
-          SwitchListTile.adaptive(
-            title: Text(flag.name), // no i18n; these are developer-facing settings
-            value: globalSettings.getBool(flag),
-            onChanged: (value) => globalSettings.setBool(flag, value)),
-      ]));
+      body: ListView(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        children: [Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Text(zulipLocalizations.experimentalFeatureSettingsWarning,
+              style: TextStyle(fontSize: 17).merge(weightVariableTextStyle(context, wght: 400)))),
+          for (final flag in flags)
+            Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(
+                children: [Expanded(
+                    child: Text(flag.name,
+                      style: TextStyle(fontSize: 20, color: designVariables.contextMenuItemText).merge(weightVariableTextStyle(context, wght: 600)))),
+                  _CustomSwitch(
+                    value: globalSettings.getBool(flag),
+                    onChanged: (value) => globalSettings.setBool(flag, value)),
+                ])),
+        ]));
   }
 }
 
@@ -344,4 +359,22 @@ class CustomRadioTile<T> extends StatelessWidget {
           ])));
   }
 }
+class _CustomSwitch extends StatelessWidget {
+  const _CustomSwitch({
+    required this.value,
+    required this.onChanged,
+  });
+
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: () => onChanged(!value),
+      child: Toggle(value: value, onChanged: onChanged ));
+  }
+}
+
 
