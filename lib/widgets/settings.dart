@@ -68,8 +68,7 @@ class _SettingsHeader extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16,8),
         child: Text(title,
-          style: TextStyle(
-            fontSize: 17).merge(weightVariableTextStyle(context, wght: 600)),
+          style: TextStyle(fontSize: 17).merge(weightVariableTextStyle(context, wght: 600)),
         )));
   }}
 
@@ -117,18 +116,19 @@ class _ThemeSetting extends StatelessWidget {
   Widget build(BuildContext context) {
     final zulipLocalizations = ZulipLocalizations.of(context);
     final globalSettings = GlobalStoreWidget.settingsOf(context);
-    return RadioGroup<ThemeSetting?>(
-      groupValue: globalSettings.themeSetting,
-      onChanged: (newValue) => _handleChange(context, newValue),
+    final themeSetting = globalSettings.themeSetting;
+    return Material(
+      color: Colors.transparent,
       child: Column(
         children: [
-          //ListTile(title: Text(zulipLocalizations.themeSettingTitle)),
-          for (final themeSettingOption in [null, ...ThemeSetting.values])
-            RadioListTile<ThemeSetting?>.adaptive(
-              title: Text(ThemeSetting.displayName(
+          for (final themeSettingOption in [ThemeSetting.dark, ThemeSetting.light, null])
+            CustomRadioTile<ThemeSetting?>(
+              value: themeSettingOption,
+              groupValue: themeSetting,
+              label: ThemeSetting.displayName(
                 themeSetting: themeSettingOption,
-                zulipLocalizations: zulipLocalizations)),
-              value: themeSettingOption),
+                zulipLocalizations: zulipLocalizations),
+              onChanged: (v) => _handleChange(context, v)),
         ]));
   }
 }
@@ -188,17 +188,18 @@ class VisitFirstUnreadSettingPage extends StatelessWidget {
     final globalSettings = GlobalStoreWidget.settingsOf(context);
     return Scaffold(
       appBar: AppBar(title: Text(zulipLocalizations.initialAnchorSettingTitle)),
-      body: RadioGroup<VisitFirstUnreadSetting>(
-        groupValue: globalSettings.visitFirstUnread,
-        onChanged: (newValue) => _handleChange(context, newValue),
-        child: Column(children: [
-          ListTile(title: Text(zulipLocalizations.initialAnchorSettingDescription)),
-          for (final value in VisitFirstUnreadSetting.values)
-            RadioListTile<VisitFirstUnreadSetting>.adaptive(
-              title: Text(_valueDisplayName(value,
-                zulipLocalizations: zulipLocalizations)),
-              value: value),
-        ])));
+      body: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Text(zulipLocalizations.initialAnchorSettingDescription,
+            style: TextStyle(fontSize: 17).merge(weightVariableTextStyle(context, wght: 400)))),
+        for (final value in VisitFirstUnreadSetting.values)
+          CustomRadioTile(
+            value: value,
+            groupValue: globalSettings.visitFirstUnread,
+            label: _valueDisplayName(value, zulipLocalizations: zulipLocalizations),
+            onChanged:(newValue) => _handleChange(context, newValue))
+      ]));
   }
 }
 
@@ -245,22 +246,18 @@ class MarkReadOnScrollSettingPage extends StatelessWidget {
     final globalSettings = GlobalStoreWidget.settingsOf(context);
     return Scaffold(
       appBar: AppBar(title: Text(zulipLocalizations.markReadOnScrollSettingTitle)),
-      body: RadioGroup<MarkReadOnScrollSetting>(
-        groupValue: globalSettings.markReadOnScroll,
-        onChanged: (newValue) => _handleChange(context, newValue),
-        child: Column(children: [
-          ListTile(title: Text(zulipLocalizations.markReadOnScrollSettingDescription)),
-          for (final value in MarkReadOnScrollSetting.values)
-            RadioListTile<MarkReadOnScrollSetting>.adaptive(
-              title: Text(_valueDisplayName(value,
-                zulipLocalizations: zulipLocalizations)),
-              subtitle: () {
-                final result = _valueDescription(value,
-                  zulipLocalizations: zulipLocalizations);
-                return result == null ? null : Text(result);
-              }(),
-              value: value),
-        ])));
+      body: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Padding(padding: const EdgeInsets.all(16.0),
+          child: Text(zulipLocalizations.markReadOnScrollSettingDescription,
+            style: TextStyle(fontSize: 17).merge(weightVariableTextStyle(context, wght: 400)))),
+        for (final value in MarkReadOnScrollSetting.values)
+          CustomRadioTile(
+            value: value,
+            groupValue: globalSettings.markReadOnScroll,
+            label: _valueDisplayName(value, zulipLocalizations: zulipLocalizations),
+            onChanged: (newValue) => _handleChange(context, newValue),
+            description: _valueDescription(value, zulipLocalizations: zulipLocalizations))
+      ]));
   }
 }
 
@@ -291,3 +288,60 @@ class ExperimentalFeaturesPage extends StatelessWidget {
       ]));
   }
 }
+
+class CustomRadioTile<T> extends StatelessWidget {
+  final T value;
+  final T groupValue;
+  final String label;
+  final ValueChanged<T?> onChanged;
+  final String? description;
+
+  const CustomRadioTile({
+    super.key,
+    required this.value,
+    required this.groupValue,
+    required this.label,
+    required this.onChanged,
+    this.description,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final selected = value == groupValue;
+    final size = 20.0;
+    final colr = const Color(0xff4370f0);
+
+    return InkWell(
+      onTap: () => onChanged(value),
+      borderRadius: BorderRadius.circular(6),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              margin: const EdgeInsets.only(top: 4),
+              width: size,
+              height: size,
+              decoration: BoxDecoration(
+                color: selected ? colr : Colors.transparent,
+                border: Border.all(color: selected ? colr : Colors.grey.shade400, width: 2),
+                borderRadius: BorderRadius.circular(size / 2)),
+              child: selected? const Icon(ZulipIcons.check, size: 16, color: Colors.white): null),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label,style: TextStyle(fontSize: 18).merge(weightVariableTextStyle(context, wght: 500))),
+                  if (description != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(description!,
+                        style: TextStyle(fontSize: 17).merge(weightVariableTextStyle(context, wght: 400)),),
+                    )])),
+          ])));
+  }
+}
+

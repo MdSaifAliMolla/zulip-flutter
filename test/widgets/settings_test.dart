@@ -51,17 +51,15 @@ void main() {
 
   Finder findRadioListTileWithTitle<T>(String title) => find.ancestor(
     of: find.text(title),
-    matching: find.byType(RadioListTile<T>));
+    matching: find.byType(CustomRadioTile<T>));
 
   void checkRadioButtonAppearsChecked<T>(WidgetTester tester,
       String title, bool expectedIsChecked, {String? subtitle}) {
-    check(tester.semantics.find(findRadioListTileWithTitle<T>(title)))
-      .containsSemantics(
-        label: subtitle == null
-          ? title
-          : '$title\n$subtitle',
-        isInMutuallyExclusiveGroup: true,
-        hasCheckedState: true, isChecked: expectedIsChecked);
+      final tile = tester.widget<CustomRadioTile<T>>(findRadioListTileWithTitle<T>(title));
+      if (expectedIsChecked) {
+        check(tile.value).equals(tile.groupValue);
+      } else {
+        check(tile.value).not((it) => it.equals(tile.groupValue));}
   }
 
   testWidgets('SettingsPage is scrollable when taller than a screenful', (tester) async {
@@ -317,3 +315,4 @@ void main() {
   //   [GlobalSettingsStore.experimentalFeatureFlags] so that tests can
   //   control making it empty, or non-empty, at will.)
 }
+
